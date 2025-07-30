@@ -13,8 +13,7 @@ const app = express();
 
 app.use(
   cors({
-    origin:
-      process.env.FRONTEND_URL || "https://personal-book-manager.vercel.app/",
+    origin: true,
     credentials: true,
   })
 );
