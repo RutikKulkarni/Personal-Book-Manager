@@ -10,11 +10,20 @@ import type {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+interface ApiRequestInit extends Omit<RequestInit, "body"> {
+  body?: object | string | null;
+}
+
 class ApiClient {
   private baseURL: string;
   private token: string | null = null;
 
   constructor() {
+    if (!API_URL) {
+      throw new Error(
+        "NEXT_PUBLIC_API_URL environment variable is not defined"
+      );
+    }
     this.baseURL = API_URL;
   }
 
@@ -24,20 +33,25 @@ class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: ApiRequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
+
+    const { body, ...restOptions } = options;
+    let processedBody: BodyInit | null | undefined = body as string | null;
+
+    if (body && typeof body === "object") {
+      processedBody = JSON.stringify(body);
+    }
+
     const config: RequestInit = {
       headers: {
         "Content-Type": "application/json",
         ...(this.token && { Authorization: `Bearer ${this.token}` }),
       },
-      ...options,
+      ...restOptions,
+      body: processedBody,
     };
-
-    if (config.body && typeof config.body === "object") {
-      config.body = JSON.stringify(config.body);
-    }
 
     const response = await fetch(url, config);
     const data = await response.json();
@@ -80,7 +94,6 @@ class ApiClient {
         params.append(key, value);
       }
     });
-
     const queryString = params.toString();
     return this.request<ApiResponse<Book[]>>(
       `/books${queryString ? `?${queryString}` : ""}`

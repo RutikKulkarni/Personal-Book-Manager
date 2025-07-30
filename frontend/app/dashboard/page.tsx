@@ -109,7 +109,10 @@ export default function DashboardPage() {
       const book = books.find((b) => b._id === bookId);
       if (!book) return;
 
-      await api.updateBook(bookId, { ...book, status: newStatus as any });
+      await api.updateBook(bookId, {
+        ...book,
+        status: newStatus as Book["status"],
+      });
       toast.success("Status updated!");
       fetchData();
     } catch (error) {
